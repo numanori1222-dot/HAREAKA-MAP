@@ -307,7 +307,7 @@ function refreshMap(){
   if(!map) return;
   Object.values(markers).forEach(function(m){map.removeLayer(m);});
   markers={};
-  fil().forEach(function(f){
+  filWithSearch().forEach(function(f){
     var m=L.marker([f.lat,f.lng],{icon:mkIcon(f)});
     m.on("click",function(){openModal(f.id);});
     var c=cards[f.id], st=(c&&c.status)||"unvisited", sc=SC[st];
@@ -326,7 +326,7 @@ function renderList(){
   var el=document.getElementById("list-view");
   var html="";
   [1,2,3].forEach(function(z){
-    var items=fil().filter(function(f){return f.zone===z;});
+    var items=filWithSearch().filter(function(f){return f.zone===z;});
     if(!items.length) return;
     html+="<div class='zh' style='color:"+ZC[z]+"'>"+ZL[z]+" <span class='zc' style='color:"+ZC[z]+"'>"+items.length+"件</span></div>";
     items.forEach(function(f){
@@ -472,44 +472,38 @@ var searchQuery = "";
 document.getElementById("search-input").addEventListener("input", function(){
   searchQuery = this.value.trim();
   document.getElementById("search-clear").style.display = searchQuery ? "block" : "none";
-  applySearch();
+  refreshMap();
+  if(curTab === "list") renderList();
+  updateSearchCount();
 });
 
 function clearSearch(){
   searchQuery = "";
   document.getElementById("search-input").value = "";
   document.getElementById("search-clear").style.display = "none";
-  applySearch();
-}
-
-function applySearch(){
   refreshMap();
   if(curTab === "list") renderList();
   updateSearchCount();
 }
 
 function updateSearchCount(){
-  var count = fil().length;
   var el = document.getElementById("search-count");
   if(searchQuery){
+    var count = filWithSearch().length;
     el.textContent = "「" + searchQuery + "」の検索結果: " + count + "件";
   } else {
     el.textContent = "";
   }
 }
 
-// fil()関数を検索対応に上書き
-var _origFil = fil;
-fil = function(){
-  var results = _origFil();
+function filWithSearch(){
+  var results = fil();
   if(!searchQuery) return results;
-  var q = searchQuery.toLowerCase();
+  var q = searchQuery;
   return results.filter(function(f){
-    return f.name.toLowerCase().indexOf(q) !== -1 || 
-           f.address.toLowerCase().indexOf(q) !== -1 ||
-           (f.tel && f.tel.indexOf(q) !== -1);
+    return f.name.indexOf(q) !== -1 || f.address.indexOf(q) !== -1 || (f.tel && f.tel.indexOf(q) !== -1);
   });
-};
+}
 
 </script>
 </body>
