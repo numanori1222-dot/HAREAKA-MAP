@@ -454,6 +454,8 @@ function saveCard(){
   if(!curFid) return;
   cards[curFid]={status:md.status,contacts:md.contacts,visits:md.visits,memo:md.memo,cardPhoto:md.cardPhoto};
   save(); updateStats(); refreshMap(); if(curTab==="list") renderList(); closeModal();
+  // スプレッドシートにも保存
+  saveToSheet(curFid, cards[curFid]);
 }
 function closeModal(){document.getElementById("mo").classList.add("hidden"); curFid=null;}
 function updateStats(){
@@ -466,6 +468,59 @@ function updateStats(){
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 
 load(); updateStats(); initMap();
+
+// ===== Googleスプレッドシート連携 =====
+var GAS_URL = "https://script.google.com/macros/s/AKfycbzHytLZKyimNfdEsoZHay0u5wASSFIwv1WS-BTjlA5RVkevPjNd0n3E6erfL7L9qbI/exec";
+var syncEnabled = true;
+
+// 起動時にスプレッドシートからデータを読み込む
+function loadFromSheet() {
+  if (!syncEnabled) return;
+  fetch(GAS_URL + "?action=getAll")
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach(function(id) {
+          cards[id] = data[id];
+        });
+        // localStorageにも保存
+        save();
+        updateStats();
+        refreshMap();
+        if (curTab === "list") renderList();
+        console.log("スプレッドシートから" + Object.keys(data).length + "件読み込みました");
+      }
+    })
+    .catch(function(e) {
+      console.log("シート読み込みエラー:", e);
+    });
+}
+
+// スプレッドシートに保存する関数
+function saveToSheet(id, cardData) {
+  if (!syncEnabled) return;
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      id: id,
+      status: cardData.status,
+      contacts: cardData.contacts,
+      visits: cardData.visits,
+      memo: cardData.memo
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    console.log("シート保存完了:", id);
+  })
+  .catch(function(e) {
+    console.log("シート保存エラー:", e);
+  });
+}
+
+// 起動時にシートから読み込む
+setTimeout(loadFromSheet, 2000);
 
 // ===== 検索機能 =====
 var searchQuery = "";
