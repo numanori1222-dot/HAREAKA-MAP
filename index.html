@@ -473,27 +473,30 @@ load(); updateStats(); initMap();
 var GAS_URL = "https://script.google.com/macros/s/AKfycbzHytLZKyimNfdEsoZHay0u5wASSFIwv1WS-BTjlA5RVkevPjNd0n3E6erfL7L9qbI/exec";
 var syncEnabled = true;
 
-// 起動時にスプレッドシートからデータを読み込む
+// 起動時にスプレッドシートからデータを読み込む（JSONP方式でCORSを回避）
 function loadFromSheet() {
   if (!syncEnabled) return;
-  fetch(GAS_URL + "?action=getAll")
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data && typeof data === 'object') {
-        Object.keys(data).forEach(function(id) {
-          cards[id] = data[id];
-        });
-        // localStorageにも保存
-        save();
-        updateStats();
-        refreshMap();
-        if (curTab === "list") renderList();
-        console.log("スプレッドシートから" + Object.keys(data).length + "件読み込みました");
-      }
-    })
-    .catch(function(e) {
-      console.log("シート読み込みエラー:", e);
-    });
+  var cbName = 'gasCallback_' + Date.now();
+  window[cbName] = function(data) {
+    if (data && typeof data === 'object') {
+      Object.keys(data).forEach(function(id) {
+        cards[id] = data[id];
+      });
+      save();
+      updateStats();
+      refreshMap();
+      if (curTab === "list") renderList();
+      console.log("スプレッドシートから" + Object.keys(data).length + "件読み込みました");
+    }
+    var el = document.getElementById(cbName);
+    if (el) el.remove();
+    delete window[cbName];
+  };
+  var s = document.createElement('script');
+  s.id = cbName;
+  s.src = GAS_URL + '?action=getAll&callback=' + cbName;
+  s.onerror = function() { console.log("シート読み込みエラー"); };
+  document.body.appendChild(s);
 }
 
 // スプレッドシートに保存する関数
