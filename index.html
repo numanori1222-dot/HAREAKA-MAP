@@ -452,10 +452,11 @@ function renderMBody(t){
 }
 function saveCard(){
   if(!curFid) return;
-  cards[curFid]={status:md.status,contacts:md.contacts,visits:md.visits,memo:md.memo,cardPhoto:md.cardPhoto};
+  var fid = curFid;
+  cards[fid]={status:md.status,contacts:md.contacts,visits:md.visits,memo:md.memo,cardPhoto:md.cardPhoto};
   save(); updateStats(); refreshMap(); if(curTab==="list") renderList(); closeModal();
   // スプレッドシートにも保存
-  saveToSheet(curFid, cards[curFid]);
+  saveToSheet(fid, cards[fid]);
 }
 function closeModal(){document.getElementById("mo").classList.add("hidden"); curFid=null;}
 function updateStats(){
