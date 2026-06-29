@@ -500,27 +500,28 @@ function loadFromSheet() {
   document.body.appendChild(s);
 }
 
-// スプレッドシートに保存する関数
+// スプレッドシートに保存する関数（JSONP方式）
 function saveToSheet(id, cardData) {
   if (!syncEnabled) return;
-  fetch(GAS_URL, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      id: id,
-      status: cardData.status,
-      contacts: cardData.contacts,
-      visits: cardData.visits,
-      memo: cardData.memo
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
+  var cbName = 'gasSaveCallback_' + Date.now();
+  window[cbName] = function(result) {
     console.log("シート保存完了:", id);
-  })
-  .catch(function(e) {
-    console.log("シート保存エラー:", e);
-  });
+    var el = document.getElementById(cbName);
+    if (el) el.remove();
+    delete window[cbName];
+  };
+  var params = encodeURIComponent(JSON.stringify({
+    id: id,
+    status: cardData.status || 'unvisited',
+    contacts: cardData.contacts || [],
+    visits: cardData.visits || [],
+    memo: cardData.memo || ''
+  }));
+  var s = document.createElement('script');
+  s.id = cbName;
+  s.src = GAS_URL + '?action=save&callback=' + cbName + '&data=' + params;
+  s.onerror = function() { console.log("シート保存エラー"); };
+  document.body.appendChild(s);
 }
 
 // 起動時にシートから読み込む
