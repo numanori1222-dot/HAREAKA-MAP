@@ -491,6 +491,15 @@ function loadFromSheet() {
             };
           });
         }
+        if (rec && rec.visits) {
+          rec.visits = rec.visits.map(function(v){
+            return {
+              date: v.date || v["日付"] || "",
+              note: v.note || v["メモ"] || "",
+              id: v.id || v["登録番号"] || Date.now()
+            };
+          });
+        }
         cards[id] = rec;
       });
       save();
@@ -523,11 +532,14 @@ function saveToSheet(id, cardData) {
   var jaContacts = (cardData.contacts || []).map(function(c){
     return {"氏名": c.name || "", "役職": c.role || "", "電話": c.tel || ""};
   });
+  var jaVisits = (cardData.visits || []).map(function(v){
+    return {"日付": v.date || "", "メモ": v.note || "", "登録番号": v.id || Date.now()};
+  });
   var params = encodeURIComponent(JSON.stringify({
     id: id,
     status: cardData.status || 'unvisited',
     contacts: jaContacts,
-    visits: cardData.visits || [],
+    visits: jaVisits,
     memo: cardData.memo || ''
   }));
   var s = document.createElement('script');
