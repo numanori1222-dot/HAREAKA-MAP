@@ -481,7 +481,17 @@ function loadFromSheet() {
   window[cbName] = function(data) {
     if (data && typeof data === 'object') {
       Object.keys(data).forEach(function(id) {
-        cards[id] = data[id];
+        var rec = data[id];
+        if (rec && rec.contacts) {
+          rec.contacts = rec.contacts.map(function(c){
+            return {
+              name: c.name || c["氏名"] || "",
+              role: c.role || c["役職"] || "",
+              tel: c.tel || c["電話"] || ""
+            };
+          });
+        }
+        cards[id] = rec;
       });
       save();
       updateStats();
@@ -510,10 +520,13 @@ function saveToSheet(id, cardData) {
     if (el) el.remove();
     delete window[cbName];
   };
+  var jaContacts = (cardData.contacts || []).map(function(c){
+    return {"氏名": c.name || "", "役職": c.role || "", "電話": c.tel || ""};
+  });
   var params = encodeURIComponent(JSON.stringify({
     id: id,
     status: cardData.status || 'unvisited',
-    contacts: cardData.contacts || [],
+    contacts: jaContacts,
     visits: cardData.visits || [],
     memo: cardData.memo || ''
   }));
