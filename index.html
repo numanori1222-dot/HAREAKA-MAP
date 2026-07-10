@@ -115,10 +115,10 @@ textarea{resize:vertical;}
     <button class="fb" data-type="地域包括" id="ft-p">地域包括</button>
     <div class="fdiv"></div>
     <button class="fb as" data-st="all" id="fs-all">全状況</button>
-    <button class="fb" data-st="unvisited" id="fs-u">未接触</button>
-    <button class="fb" data-st="contacted" id="fs-c">接触済</button>
-    <button class="fb" data-st="relationship" id="fs-r">構築中</button>
-    <button class="fb" data-st="active" id="fs-a">紹介あり</button>
+    <button class="fb" data-st="未接触" id="fs-u">未接触</button>
+    <button class="fb" data-st="接触済み" id="fs-c">接触済</button>
+    <button class="fb" data-st="関係構築中" id="fs-r">構築中</button>
+    <button class="fb" data-st="紹介あり" id="fs-a">紹介あり</button>
   </div>
 </div>
 
@@ -165,10 +165,10 @@ var HARUAKA = {lat:35.752476, lng:139.802094};
 var ZC = {1:"#22c55e", 2:"#f59e0b", 3:"#ef4444"};
 var ZL = {1:"〜1km", 2:"1〜3km", 3:"3〜5km"};
 var SC = {
-  unvisited:{label:"未接触",color:"#6b7280",bg:"#374151"},
-  contacted:{label:"接触済み",color:"#3b82f6",bg:"#1e3a5f"},
-  relationship:{label:"関係構築中",color:"#f59e0b",bg:"#451a03"},
-  active:{label:"紹介あり",color:"#22c55e",bg:"#052e16"}
+  "未接触":{label:"未接触",color:"#6b7280",bg:"#374151"},
+  "接触済み":{label:"接触済み",color:"#3b82f6",bg:"#1e3a5f"},
+  "関係構築中":{label:"関係構築中",color:"#f59e0b",bg:"#451a03"},
+  "紹介あり":{label:"紹介あり",color:"#22c55e",bg:"#052e16"}
 };
 var KEY = "hareaka_v3";
 var cards = {};
@@ -180,7 +180,7 @@ function fil(){
   return FACS.filter(function(f){
     if(fz!=="all" && f.zone!==Number(fz)) return false;
     if(ft!=="all" && f.type!==ft) return false;
-    if(fs!=="all"){var s=(cards[f.id]&&cards[f.id].status)||"unvisited"; if(s!==fs) return false;}
+    if(fs!=="all"){var s=(cards[f.id]&&cards[f.id].status)||"未接触"; if(s!==fs) return false;}
     return true;
   });
 }
@@ -288,7 +288,7 @@ function initMap(){
 }
 
 function mkIcon(f){
-  var c=cards[f.id], status=(c&&c.status)||"unvisited", sc=SC[status];
+  var c=cards[f.id], status=(c&&c.status)||"未接触", sc=SC[status];
   var hv=c&&c.visits&&c.visits.length>0;
   var badge=hv?"<div style='position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;color:#6366f1;font-weight:800'>&#10003;</div>":"";
   if(f.type==="地域包括"){
@@ -310,7 +310,7 @@ function refreshMap(){
   filWithSearch().forEach(function(f){
     var m=L.marker([f.lat,f.lng],{icon:mkIcon(f)});
     m.on("click",function(){openModal(f.id);});
-    var c=cards[f.id], st=(c&&c.status)||"unvisited", sc=SC[st];
+    var c=cards[f.id], st=(c&&c.status)||"未接触", sc=SC[st];
     var vt=(c&&c.visits&&c.visits.length>0)?" · "+c.visits.length+"回訪問":"";
     m.bindTooltip(
       "<div style='font-size:12px;line-height:1.6'><b>"+f.name+"</b><br><span style='color:#64748b'>"+f.type+" · "+ZL[f.zone]+(f.dist?" · "+f.dist+"km":"")+"</span><br><span style='color:"+sc.color+"'>"+sc.label+vt+"</span></div>",
@@ -330,7 +330,7 @@ function renderList(){
     if(!items.length) return;
     html+="<div class='zh' style='color:"+ZC[z]+"'>"+ZL[z]+" <span class='zc' style='color:"+ZC[z]+"'>"+items.length+"件</span></div>";
     items.forEach(function(f){
-      var c=cards[f.id], st=(c&&c.status)||"unvisited", sc=SC[st];
+      var c=cards[f.id], st=(c&&c.status)||"未接触", sc=SC[st];
       var vc=(c&&c.visits&&c.visits.length)||0;
       var cn=(c&&c.contacts&&c.contacts[0]&&c.contacts[0].name)||"";
       var cr=(c&&c.contacts&&c.contacts[0]&&c.contacts[0].role)||"";
@@ -370,7 +370,7 @@ function openModal(id){
   curFid=id;
   var f=FACS.find(function(x){return x.id===id;}), c=cards[id]||{};
   md={
-    status:c.status||"unvisited",
+    status:c.status||"未接触",
     contacts:c.contacts?JSON.parse(JSON.stringify(c.contacts)):[{name:"",role:"",tel:""}],
     visits:c.visits?JSON.parse(JSON.stringify(c.visits)):[],
     memo:c.memo||"", cardPhoto:c.cardPhoto||null,
@@ -464,7 +464,7 @@ function updateStats(){
   var vals=Object.values(cards);
   document.getElementById("sv-total").textContent=total;
   document.getElementById("sv-visited").textContent=vals.filter(function(c){return c.visits&&c.visits.length>0;}).length;
-  document.getElementById("sv-active").textContent=vals.filter(function(c){return c.status==="active";}).length;
+  document.getElementById("sv-active").textContent=vals.filter(function(c){return c.status==="紹介あり";}).length;
 }
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 
@@ -537,7 +537,7 @@ function saveToSheet(id, cardData) {
   });
   var params = encodeURIComponent(JSON.stringify({
     id: id,
-    status: cardData.status || 'unvisited',
+    status: cardData.status || '未接触',
     contacts: jaContacts,
     visits: jaVisits,
     memo: cardData.memo || ''
